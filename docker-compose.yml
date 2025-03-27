@@ -1,3 +1,5 @@
+version: '3.3'
+
 services:
   web:
     build:
@@ -5,18 +7,23 @@ services:
       dockerfile: Dockerfile
     container_name: django_app
     command: >
-      sh -c "python manage.py migrate &&
-             python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+      sh -c "
+             python manage.py migrate &&
+             python manage.py collectstatic --noinput && 
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000"
     ports:
       - "8000:8000"
+    expose:
+      - "8000"
+    networks:
+      - app_network
     env_file:
       - .env
     volumes:
       - .:/app
-      - static_volume:/app/static
+      - static_volume:/app/staticfiles
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
   redis:
     image: redis:latest
@@ -28,27 +35,45 @@ services:
       - "6379"
     ports:
       - "6379:6379"
+    networks:
+      - app_network  # ← Добавлено
 
   db:
     image: postgres:16
-    container_name: db
     env_file:
       - ./.env
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+    networks:
+      - app_network  # ← Добавлено
+    healthcheck:  # ← Проверка готовности БД
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 5s
       timeout: 5s
       retries: 5
+    ports:  # Для отладки (можно убрать в проде)
+      - "5432:5432"
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - type: bind
+        source: ./nginx/nginx.conf
+        target: /etc/nginx/nginx.conf
+    depends_on:
+      - web
+    networks:
+      - app_network
 
 
 volumes:
   postgres_data:
   static_volume:
   redis:
+
+networks:
+  app_network:
+    driver: bridge
