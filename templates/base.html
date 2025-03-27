@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация по телефону</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Обновленные стили */
+        .auth-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2c3e50, #4ca1af); /* Градиент фона страницы */
+        }
+        .info-section {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b); /* Градиент для информационной секции */
+            color: white;
+            padding: 2rem;
+            border-radius: 0 20px 20px 0; /* Закругленные углы справа */
+        }
+        .auth-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 400px;
+            background: linear-gradient(135deg, #ffffff, #f0f8ff); /* Градиент для карточки авторизации */
+        }
+        .phone-input { letter-spacing: 2px; }
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .profile-card { display: none; }
+        .code-input { display: none; }
+        #logoutBtn {
+            width: 100%;
+            max-width: 200px;
+            margin-top: 2rem;
+            background: linear-gradient(135deg, #ff6f91, #ff9a8b); /* Градиент для кнопки выхода */
+            border: none;
+        }
+        #logoutBtn:hover {
+            background: linear-gradient(135deg, #ff9a8b, #ff6f91); /* Изменение градиента при наведении */
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4e54c8, #8f94fb); /* Градиент для основных кнопок */
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #8f94fb, #4e54c8); /* Изменение градиента при наведении */
+        }
+        .alert-info {
+            background: linear-gradient(135deg, #82ccdd, #b2f7ef); /* Градиент для информационного блока */
+            border: none;
+        }
+        .list-group-item {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef); /* Градиент для элементов списка */
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row auth-container">
+            <!-- Левая колонка с информацией -->
+            <div class="col-md-4 info-section d-none d-md-flex align-items-center">
+                <div class="px-lg-5">
+                    <div class="mb-5">
+                        <h2 class="display-5 fw-bold mb-3">Добро пожаловать!</h2>
+                        <p class="lead">Безопасная авторизация в вашем личном кабинете</p>
+                    </div>
+                    <div class="d-flex gap-4 mb-4">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-shield-check" viewBox="0 0 16 16">
+                                <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/>
+                                <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>Безопасность</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Правая колонка с формами -->
+            <div class="col-md-6 d-flex align-items-center justify-content-center p-5">
+                <!-- Форма ввода телефона -->
+                <div class="auth-card w-100 phone-input">
+                    <div class="card-body p-4">
+                        <h2 class="mb-4 text-center">Вход</h2>
+                        <form id="phoneForm">
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Номер телефона</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">+7</span>
+                                    <input type="tel" class="form-control phone-input" id="phone"
+                                           placeholder="900 000 00 00" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                Получить код
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- Форма ввода кода -->
+                <div class="auth-card w-100 code-input">
+                    <div class="card-body p-4">
+                        <h2 class="mb-4 text-center">Подтверждение</h2>
+                        <!-- Блок для отображения кода в режиме разработки -->
+                        {% if DEBUG %}
+                          <div id="debugCodeInfo" class="alert alert-info">
+                            <strong>Режим разработчика:</strong> Код из SMS: <span id="debugCode"></span>
+                          </div>
+                        {% endif %}
+                        <form id="codeForm">
+                            <div class="mb-3">
+                                <label for="code" class="form-label">Код из SMS</label>
+                                <input type="text" class="form-control" id="code"
+                                       placeholder="Введите 4-значный код" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                Подтвердить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="auth-card w-100 profile-card">
+                    <div class="card-body p-4">
+                        <h2 class="mb-4 text-center">Профиль</h2>
+                        <div id="profileInfo">
+                            <p>Ваш номер: <strong id="userPhone"></strong></p>
+                            <p>Ваш инвайт-код: <strong id="inviteCode"></strong></p>
+                            <p>Активированный код: <strong id="activatedInvite">нет</strong></p>
+                            <div class="mt-4">
+                                <h5>Приглашенные пользователи:</h5>
+                                <ul id="invitedUsers" class="list-group mt-2"></ul>
+                            </div>
+                        </div>
+                        <form id="inviteForm" class="mt-4">
+                            <div class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       id="inviteInput"
+                                       placeholder="Введите чужой инвайт-код">
+                                <button type="submit" class="btn btn-success">
+                                    Активировать
+                                </button>
+                            </div>
+                        </form>
+                        <div class="text-center mt-4">
+                            <button id="logoutBtn" class="btn btn-danger">Выйти</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/api/';
+        const API_URL_LOGIN = 'http://127.0.0.1:8000/api/auth/login/';
+        const VERY_CODE_API_URL = 'http://127.0.0.1:8000/api/auth/verify-code/';
+        let currentPhone = '';
+        // Преобразуйте Django-булево значение в JavaScript-булево
+        const DEBUG = {{ DEBUG|yesno:"true,false" }};
+        // Пример использования
+        if (DEBUG) {
+            console.log("Режим отладки включен");
+        } else {
+            console.log("Продакшен-режим");
+        }
+        // Обработчик отправки телефона
+        document.getElementById('phoneForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = '+7' + document.getElementById('phone').value.replace(/\D/g, '');
+            currentPhone = phone;
+            try {
+                const response = await fetch(API_URL_LOGIN, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.querySelector('.phone-input').style.display = 'none';
+                    document.querySelector('.code-input').style.display = 'block';
+                    // Показываем код в DEBUG-режиме
+                    if (DEBUG && data.debug_code) {
+                        document.getElementById('debugCode').textContent = data.debug_code;
+                        document.getElementById('debugCodeInfo').style.display = 'block';
+                    }
+                } else {
+                    alert('Ошибка отправки кода');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        // Обработчик подтверждения кода
+        document.getElementById('codeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('code').value;
+            try {
+                const response = await fetch(VERY_CODE_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentPhone,
+                        code: code
+                    })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('access_token', data.access);
+                    localStorage.setItem('refresh_token', data.refresh);
+                    loadProfile();
+                } else {
+                    alert('Неверный код');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        // Загрузка профиля
+        async function loadProfile() {
+            try {
+                const response = await fetch(API_URL + 'profile/', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    // Скрываем форму ввода кода и показываем профиль
+                    document.querySelector('.code-input').style.display = 'none';
+                    document.querySelector('.profile-card').style.display = 'block';
+                    // Обновляем основные данные профиля
+                    document.getElementById('userPhone').textContent = data.phone;
+                    document.getElementById('inviteCode').textContent = data.invite_code;
+                    document.getElementById('activatedInvite').textContent = data.activated_invite_code || 'нет';
+                    // Обновляем список приглашенных
+                    const invitedList = document.getElementById('invitedUsers');
+                    invitedList.innerHTML = data.invited_phones && data.invited_phones.length > 0
+                        ? data.invited_phones.map(phone => `
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                ${phone}
+                                <span class="badge bg-primary rounded-pill">Активирован</span>
+                            </li>
+                        `).join('')
+                        : '<li class="list-group-item text-muted">Нет приглашенных пользователей</li>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ошибка загрузки профиля');
+            }
+        }
+        // Активация инвайт-кода
+        document.getElementById('inviteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const codeInput = document.getElementById('inviteInput');
+            const code = codeInput.value.trim();
+            if (!code) {
+                alert('Введите инвайт-код');
+                return;
+            }
+            try {
+                const response = await fetch(API_URL + 'profile/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    },
+                    body: JSON.stringify({ invite_code: code })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Код успешно активирован!');
+                    document.getElementById('phone').value = '';
+                    document.getElementById('code').value = '';
+                    document.getElementById('inviteInput').value = '';
+                    codeInput.value = ''; // Очищаем поле ввода
+                    loadProfile(); // Обновляем данные профиля
+                } else {
+                    alert(result.error || 'Произошла ошибка');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ошибка сети');
+            }
+        });
+        // Функция выхода
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            // Скрываем все формы
+            document.querySelectorAll('.auth-card').forEach(card => {
+                card.style.display = 'none';
+            });
+            // Показываем форму ввода телефона
+            document.querySelector('.phone-input').style.display = 'block';
+        }
+        // Обработчик кнопки выхода
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            logout();
+            alert('Вы успешно вышли из системы');
+        });
+        // Проверка авторизации
+        if (localStorage.getItem('access_token')) {
+            // Скрываем все формы
+            document.querySelectorAll('.auth-card').forEach(card => {
+                card.style.display = 'none';
+            });
+            loadProfile();
+        } else {
+            // Показываем форму ввода телефона
+            document.querySelector('.phone-input').style.display = 'block';
+        }
+    </script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
