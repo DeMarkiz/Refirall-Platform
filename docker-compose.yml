@@ -30,10 +30,19 @@ services:
 
   db:
     image: postgres:16
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
     env_file:
       - ./.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network  # ← Добавлено
+    healthcheck: # ← Проверка готовности БД
+      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports: # Для отладки (можно убрать в проде)
+      - "5432:5432"
 
   redis:
     image: redis:7
