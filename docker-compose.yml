@@ -45,16 +45,15 @@ services:
 
   # Nginx (если нужен для проксирования)
   nginx:
-    image: nginx:latest
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # монтируем файл с флагом "read-only"
-      - static_volume:/app/static
+    build:
+      context: ./nginx
     ports:
       - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - static_volume:/app/staticfiles
     depends_on:
       - web
-    networks:
-      - app-network
 
 
 volumes:
