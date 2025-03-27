@@ -1,63 +1,77 @@
-version: "3.12"
-
 services:
-  # Веб-приложение (Django)
   web:
-    build: .
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
-    volumes:
-      - .:/app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django_app
+    command: >
+      sh -c "
+             python manage.py migrate &&
+             python manage.py collectstatic --noinput && 
+             gunicorn conf.wsgi:application --bind 0.0.0.0:8000"
     ports:
       - "8000:8000"
+    expose:
+      - "8000"
+    networks:
+      - app_network
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
     depends_on:
       - db
-      - redis
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    networks:
-      - app-network
 
-  # База данных (PostgreSQL)
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: on-failure
+    volumes:
+      - redis:/var/lib/redis/data
+    expose:
+      - "6379"
+    ports:
+      - "6379:6379"
+    networks:
+      - app_network  # ← Добавлено
+
   db:
     image: postgres:16
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - ./.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - app_network  # ← Добавлено
+    healthcheck:  # ← Проверка готовности БД
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:  # Для отладки (можно убрать в проде)
+      - "5432:5432"
 
-  # Redis
-  redis:
-    image: redis:latest
-    networks:
-      - app-network
-
-  # Nginx (если нужен для проксирования)
   nginx:
-    build:
-      context: ./nginx
+    image: nginx:latest
+    container_name: nginx
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - static_volume:/app/staticfiles
+      - type: bind
+        source: ./nginx/nginx.conf
+        target: /etc/nginx/nginx.conf
     depends_on:
       - web
+    networks:
+      - app_network
 
 
 volumes:
   postgres_data:
   static_volume:
+  redis:
 
 networks:
-  app-network:
+  app_network:
     driver: bridge
