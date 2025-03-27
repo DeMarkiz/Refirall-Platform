@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.8'
 
 services:
   web:
@@ -21,7 +21,7 @@ services:
       - .env
     volumes:
       - .:/app
-      - static_volume:/app/staticfiles
+      - static_volume:/app/static
     depends_on:
       - db
 
